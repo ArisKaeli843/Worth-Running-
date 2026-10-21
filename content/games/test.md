@@ -1,12 +1,12 @@
-title: "Test Entry" date: 2026-10-17 draft: false
+---
+title: "Test Entry"
+date: 2026-10-17
+draft: false
+tags: ["No AI", "AI Assisted"]
+cover: "linear-gradient(135deg, rgba(12,27,20,0.7), rgba(89,135,103,0.8))"
+summary: "A sample review post to help shape the Worth Running archive layout."
+---
 
-Worth Running?
+This is a quick example post designed to fit the archive theme. It lets you preview how the title, metadata, and category tags will appear before more entries start filling the site.
 
-Yes
-
-
-
-Why?
-
-This is a test page.
-
+The overall idea is to keep the card grid readable, lightweight, and visually consistent while the archive grows over time.
