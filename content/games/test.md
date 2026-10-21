@@ -3,7 +3,6 @@ title: "Test Entry"
 date: 2026-10-17
 draft: false
 tags: ["No AI", "AI Assisted"]
-cover: "linear-gradient(135deg, rgba(12,27,20,0.7), rgba(89,135,103,0.8))"
 summary: "A sample review post to help shape the Worth Running archive layout."
 ---
 
