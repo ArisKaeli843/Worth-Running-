@@ -18,6 +18,7 @@
         --blue: #b9d9ff;
         --yellow: #f6dc72;
         --red: #ff8b82;
+        --orange: #ffb166;
         --shadow: 0 18px 42px rgba(0,0,0,0.32);
       }
 
@@ -34,7 +35,7 @@
       a { color: inherit; text-decoration: none; }
       button, select { font: inherit; }
 
-      .shell { width: min(1180px, calc(100% - 2rem)); margin: 0 auto; }
+      .shell { width: min(1200px, calc(100% - 2rem)); margin: 0 auto; }
 
       .topbar {
         position: sticky;
@@ -96,7 +97,7 @@
       }
 
       .masthead {
-        padding: 2.5rem 0 1.25rem;
+        padding: 2.3rem 0 1rem;
       }
 
       .masthead-inner {
@@ -109,7 +110,7 @@
 
       h1 {
         margin: 0;
-        font-size: clamp(2.5rem, 5vw, 5rem);
+        font-size: clamp(2.3rem, 4vw, 4.5rem);
         line-height: 0.95;
         letter-spacing: -0.06em;
       }
@@ -118,7 +119,7 @@
         margin: 1rem 0 0;
         color: var(--muted);
         max-width: 78ch;
-        font-size: 1.02rem;
+        font-size: 1rem;
         line-height: 1.7;
       }
 
@@ -132,12 +133,29 @@
         padding-bottom: 1rem;
       }
 
-      select {
-        background: rgba(255,255,255,0.02);
-        color: var(--text);
+      .filter-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .filter-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.58rem 0.8rem;
         border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 0.75rem 0.85rem;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.02);
+        color: var(--muted);
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .filter-btn.active {
+        background: rgba(186,247,196,0.12);
+        color: var(--text);
+        border-color: rgba(186,247,196,0.4);
       }
 
       .pagination {
@@ -164,14 +182,14 @@
 
       .card-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1.15rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.1rem;
       }
 
       .card {
         position: relative;
         display: block;
-        min-height: 290px;
+        min-height: 260px;
         background: #0b1111;
         border: 1px solid var(--line);
         border-radius: 22px;
@@ -183,8 +201,8 @@
         position: relative;
         display: flex;
         align-items: flex-end;
-        min-height: 290px;
-        padding: 0.9rem;
+        min-height: 260px;
+        padding: 0.8rem;
         background-size: cover;
         background-position: center;
       }
@@ -203,7 +221,7 @@
         right: 0.8rem;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem;
+        gap: 0.38rem;
         z-index: 2;
       }
 
@@ -226,6 +244,9 @@
       .tag.ai-assisted { background: var(--blue); color: #0d1a24; }
       .tag.unconfirmed { background: var(--yellow); color: #1a1201; }
       .tag.archived { background: var(--red); color: #1d0807; }
+      .tag.completed { background: var(--green); color: #0c160e; }
+      .tag.in-active-development { background: var(--orange); color: #1a1201; }
+      .tag.abandoned { background: var(--red); color: #1d0807; }
 
       .content {
         position: relative;
@@ -242,7 +263,7 @@
 
       .game-title {
         margin: 0;
-        font-size: 1.24rem;
+        font-size: 1.18rem;
         line-height: 1.1;
         max-width: 15ch;
         letter-spacing: -0.03em;
@@ -262,6 +283,7 @@
           padding: 0.8rem 0;
         }
         .tabs { width: 100%; }
+        .card-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
       }
     </style>
   </head>
@@ -293,13 +315,16 @@
       </section>
 
       <section id="archived" class="archive-tools">
-        <select id="statusFilter" aria-label="Filter posts by tag">
-          <option value="all">All Posts</option>
-          <option value="no-ai">No AI</option>
-          <option value="ai-assisted">AI Assisted</option>
-          <option value="unconfirmed">Unconfirmed</option>
-          <option value="archived">Archived</option>
-        </select>
+        <div class="filter-group" aria-label="Filter posts by tag">
+          <button class="filter-btn active" type="button" data-tag="all">All</button>
+          <button class="filter-btn" type="button" data-tag="no-ai">No AI</button>
+          <button class="filter-btn" type="button" data-tag="ai-assisted">AI Assisted</button>
+          <button class="filter-btn" type="button" data-tag="unconfirmed">Unconfirmed</button>
+          <button class="filter-btn" type="button" data-tag="archived">Archived</button>
+          <button class="filter-btn" type="button" data-tag="completed">Completed</button>
+          <button class="filter-btn" type="button" data-tag="in-active-development">In Active Development</button>
+          <button class="filter-btn" type="button" data-tag="abandoned">Abandoned</button>
+        </div>
 
         <div id="pagination" class="pagination" aria-label="Page navigation"></div>
       </section>
@@ -330,23 +355,25 @@
 
     <script>
       const cards = Array.from(document.querySelectorAll('.card'));
-      const filter = document.getElementById('statusFilter');
+      const filterButtons = Array.from(document.querySelectorAll('.filter-btn'));
       const pagination = document.getElementById('pagination');
       const perPage = 30;
       let currentPage = 1;
+      let selectedTags = new Set();
 
       function normalizeTag(tag) {
         return String(tag).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       }
 
       function getFilteredCards() {
-        const selected = filter.value;
+        if (selectedTags.size === 0) return cards;
+
         return cards.filter((card) => {
-          if (selected === 'all') return true;
           const tags = (card.dataset.tags || '')
             .split(',')
             .map(item => normalizeTag(item));
-          return tags.includes(selected);
+
+          return Array.from(selectedTags).some(tag => tags.includes(tag));
         });
       }
 
@@ -380,9 +407,28 @@
         visible.forEach(card => card.style.display = 'block');
       }
 
-      filter.addEventListener('change', () => {
-        currentPage = 1;
-        renderCards();
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const tag = button.dataset.tag;
+
+          if (tag === 'all') {
+            selectedTags.clear();
+            filterButtons.forEach(btn => btn.classList.toggle('active', btn === button));
+          } else {
+            if (selectedTags.has(tag)) {
+              selectedTags.delete(tag);
+            } else {
+              selectedTags.add(tag);
+            }
+
+            const allButton = document.querySelector('.filter-btn[data-tag="all"]');
+            allButton.classList.toggle('active', selectedTags.size === 0);
+            button.classList.toggle('active', selectedTags.has(tag));
+          }
+
+          currentPage = 1;
+          renderCards();
+        });
       });
 
       renderCards();
