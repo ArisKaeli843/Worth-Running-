@@ -33,7 +33,7 @@
       }
 
       a { color: inherit; text-decoration: none; }
-      button, select { font: inherit; }
+      button { font: inherit; }
 
       .shell { width: min(1200px, calc(100% - 2rem)); margin: 0 auto; }
 
@@ -133,10 +133,33 @@
         padding-bottom: 1rem;
       }
 
+      .filter-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.58rem 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.02);
+        color: var(--muted);
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .filter-toggle:hover {
+        color: var(--text);
+        border-color: rgba(186,247,196,0.4);
+      }
+
       .filter-group {
-        display: flex;
+        display: none;
         flex-wrap: wrap;
         gap: 0.5rem;
+        margin-top: 0.8rem;
+      }
+
+      .filter-group.open {
+        display: flex;
       }
 
       .filter-btn {
@@ -152,10 +175,21 @@
         transition: 0.2s ease;
       }
 
+      .filter-btn:hover {
+        color: var(--text);
+      }
+
       .filter-btn.active {
         background: rgba(186,247,196,0.12);
         color: var(--text);
         border-color: rgba(186,247,196,0.4);
+      }
+
+      .filter-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
       }
 
       .pagination {
@@ -315,15 +349,18 @@
       </section>
 
       <section id="archived" class="archive-tools">
-        <div class="filter-group" aria-label="Filter posts by tag">
-          <button class="filter-btn active" type="button" data-tag="all">All</button>
-          <button class="filter-btn" type="button" data-tag="no-ai">No AI</button>
-          <button class="filter-btn" type="button" data-tag="ai-assisted">AI Assisted</button>
-          <button class="filter-btn" type="button" data-tag="unconfirmed">Unconfirmed</button>
-          <button class="filter-btn" type="button" data-tag="archived">Archived</button>
-          <button class="filter-btn" type="button" data-tag="completed">Completed</button>
-          <button class="filter-btn" type="button" data-tag="in-active-development">In Active Development</button>
-          <button class="filter-btn" type="button" data-tag="abandoned">Abandoned</button>
+        <div class="filter-wrap">
+          <button id="filterToggle" class="filter-toggle" type="button" aria-expanded="false">Filters</button>
+          <div id="filterGroup" class="filter-group" aria-label="Filter posts by tag">
+            <button class="filter-btn active" type="button" data-tag="all">All</button>
+            <button class="filter-btn" type="button" data-tag="no-ai">No AI</button>
+            <button class="filter-btn" type="button" data-tag="ai-assisted">AI Assisted</button>
+            <button class="filter-btn" type="button" data-tag="unconfirmed">Unconfirmed</button>
+            <button class="filter-btn" type="button" data-tag="completed">Completed</button>
+            <button class="filter-btn" type="button" data-tag="in-active-development">In Active Development</button>
+            <button class="filter-btn" type="button" data-tag="abandoned">Abandoned</button>
+            <button class="filter-btn" type="button" data-tag="archived">Archived</button>
+          </div>
         </div>
 
         <div id="pagination" class="pagination" aria-label="Page navigation"></div>
@@ -356,6 +393,8 @@
     <script>
       const cards = Array.from(document.querySelectorAll('.card'));
       const filterButtons = Array.from(document.querySelectorAll('.filter-btn'));
+      const filterToggle = document.getElementById('filterToggle');
+      const filterGroup = document.getElementById('filterGroup');
       const pagination = document.getElementById('pagination');
       const perPage = 30;
       let currentPage = 1;
@@ -366,13 +405,15 @@
       }
 
       function getFilteredCards() {
-        if (selectedTags.size === 0) return cards;
+        const homeCards = cards.filter((card) => {
+          const tags = (card.dataset.tags || '').split(',').map(item => normalizeTag(item));
+          return !tags.includes('archived');
+        });
 
-        return cards.filter((card) => {
-          const tags = (card.dataset.tags || '')
-            .split(',')
-            .map(item => normalizeTag(item));
+        if (selectedTags.size === 0) return homeCards;
 
+        return homeCards.filter((card) => {
+          const tags = (card.dataset.tags || '').split(',').map(item => normalizeTag(item));
           return Array.from(selectedTags).some(tag => tags.includes(tag));
         });
       }
@@ -406,6 +447,11 @@
         cards.forEach(card => card.style.display = 'none');
         visible.forEach(card => card.style.display = 'block');
       }
+
+      filterToggle.addEventListener('click', () => {
+        const isOpen = filterGroup.classList.toggle('open');
+        filterToggle.setAttribute('aria-expanded', String(isOpen));
+      });
 
       filterButtons.forEach((button) => {
         button.addEventListener('click', () => {
